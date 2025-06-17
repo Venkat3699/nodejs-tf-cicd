@@ -1,13 +1,10 @@
 name: NodeJS CI/CD Deployment
 
 on:
-  push:
-    branches: [ "main" ]
-# on:
-#   workflow_run:
-#     workflows: ["Terraform CICD pipeline"]
-#     types:
-#       - completed
+  workflow_run:
+    workflows: ["Terraform CICD pipeline"]
+    types:
+      - completed
 env:
   ECR_REPOSITORY: ecs/demo
   EC2_PUBLIC_IP: 13.127.102.71
