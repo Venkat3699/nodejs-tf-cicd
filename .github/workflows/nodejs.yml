@@ -90,7 +90,8 @@ jobs:
         with:
           host: ${{ env.EC2_PUBLIC_IP }}
           username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          port: 22
           envs: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, ECR_REPOSITORY, IMAGE_TAG
           script: |
             aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
