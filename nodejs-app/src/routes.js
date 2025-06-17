@@ -13,7 +13,7 @@ router.get('/health', (req, res) => {
 
 // Hello endpoint
 router.get('/hello', (req, res) => {
-  res.status(200).json({ message: 'Hello, DevOps World!' });
+  res.json({ message: 'Welcome to the DevOps World!' });
 });
 
 module.exports = router;

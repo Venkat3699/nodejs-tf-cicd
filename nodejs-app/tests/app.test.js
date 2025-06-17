@@ -13,8 +13,8 @@ describe('API Tests', () => {
   });
 
   test('GET /hello should return welcome message', async () => {
-    const res = await request(app).get('/hello');
-    expect(res.statusCode).toBe(200);
-    expect(res.body.message).toContain('Welcome');
+  const res = await request(app).get('/hello');
+  expect(res.statusCode).toBe(200);
+  expect(res.body.message).toBe('Welcome to the DevOps World!');
   });
 });
