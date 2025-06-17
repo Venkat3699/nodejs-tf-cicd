@@ -1,0 +1,69 @@
+name: NodeJS CI/CD Deployment
+
+on:
+  push:
+    branches: [ "main" ]
+# on:
+#   workflow_run:
+#     workflows: ["Terraform CICD pipeline"]
+#     types:
+#       - completed
+env:
+  ECR_REPOSITORY: ecs/demo
+  EC2_PUBLIC_IP: 172.95.36.3
+
+jobs:
+  nodejs-deploy:
+    # if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Gitleaks Installation
+        run: sudo apt install gitleaks -y
+
+      - name: Gitleaks Code Scan
+        run: gitleaks detect source . -r gitleaks-report.json -f json
+
+      - name: Install Dependencies
+        working-directory: nodejs-app
+        run:  npm install
+
+      - name: Run Tests
+        working-directory: nodejs-app
+        run: npm test
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+
+
+      - name: Build Docker Image
+        working-directory: nodejs-app
+        run: |
+          docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{env.ECR_REPOSITORY }}:latest .
+
+      - name: Push to AWS ECR
+        working-directory: nodejs-app
+        run: |
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+            host: ${{ env.EC2_PUBLIC_IP }}
+            username: ec2-user
+            key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+            script: |
+                aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+                docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest
+                docker stop myapp || true
+                docker rm myapp || true
+                docker run -d -p 80:80 --name myapp ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest

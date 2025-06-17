@@ -18,7 +18,7 @@ rds_instance_id = "app-db"
 db_username     = "admin"
 
 # EC2-ASG
-ami_id        = "ami-0e35ddab05955cf57" # Amazon Linux 2 AMI
+ami_id        = "ami-0e35ddab05955cf57" # change to your AMI
 instance_type = "t2.micro"
 asg_min_size  = 2
 asg_max_size  = 4
